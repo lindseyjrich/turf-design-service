@@ -1053,7 +1053,7 @@
   const pestOptions = ['Grassy Weeds','Dandelions','Nutsedge','Crabgrass','Fungus','Broadleafs','Spider Mites','Bagworms'];
   const chemTypes = ['Fertilizer','Herbicide','Pre-Emergent','Fungicide','Insecticide'];
   const products = [
-    'ACCORD XL HERBICIDE-RANGER PRO - EPA#524517',
+    'ACCORD XL HERBICIDE-RANGER PRO - EPA#524-696',
     'LESCO THREE-WAY SELECTIVE HERBICIDE - EPA#10404-43',
     'HM-1604 HERBICIDE- ON DECK - EPA#5905-643',
     'BARRICADE 4 FL HERBICIDE- RESOLUTE - EPA#100-1139',
@@ -1149,20 +1149,35 @@
 
   // ── Product Default Values ──
   const productDefaults = {
-    'SNAPSHOP 2.5 TG - EPA#62719-175': { rate: 0.75 },
+    'ACCORD XL HERBICIDE-RANGER PRO - EPA#524-696':                          { rate: 1.84, unit: 'oz' },
+    'LESCO THREE-WAY SELECTIVE HERBICIDE - EPA#10404-43':                   { rate: 1.28, unit: 'oz' },
+    'HM-1604 HERBICIDE- ON DECK - EPA#5905-643':                           { rate: 0.37, unit: 'oz' },
+    'BARRICADE 4 FL HERBICIDE- RESOLUTE - EPA#100-1139':                   { rate: 1.65, unit: 'oz' },
+    'LESCO PROSECUTOR PRO NON-SELECTIVE HERBICIDE - EPA#524-536-10404':    { rate: 1.84, unit: 'oz' },
+    'ROUNDUP QUICKPRO HERBICIDE - EPA#524-701':                            { rate: 1.2,  unit: 'oz' },
+    'LESCO CROSSCHECK PLUS MULTI-INSECTICIDE - EPA#10404-120':             { rate: null, unit: 'oz' },
+    'TALSTAR 10WP INSECTICIDE/MITICIDE - EPA#101563-231':                  { rate: 0.4,  unit: 'oz' },
+    'BIFEN 7.9 SC INSECTICIDE-TALAK - EPA#91234-145':                      { rate: null, unit: 'oz' },
+    'EAGLE 20EW FUNGICIDE - EPA#62719-463':                                { rate: 1.2,  unit: 'oz' },
+    'EH4-1427 HERBICIDE- Q4 - EPA#2217-886':                               { rate: 2.6,  unit: 'oz' },
+    'SNAPSHOP 2.5 TG - EPA#62719-175':                                     { rate: 2.3,  unit: 'lb' },
+    'FREEHAND 1.75G HERBICIDE - EPA#7969-273':                             { rate: 2.3,  unit: 'lb' },
   };
 
   function autoFillProductDefaults(id) {
     const name = document.getElementById(`prod_name_${id}`)?.value || '';
-    const match = Object.keys(productDefaults).find(k => name.toLowerCase().includes(k.toLowerCase().split(' ')[0]) && name.toLowerCase().includes('snapshot'));
-    const defaults = productDefaults[name] || (name.toLowerCase().includes('snapshot') ? { rate: 0.75 } : null);
+    const defaults = productDefaults[name];
+    const rateEl  = document.getElementById(`prod_rateval_${id}`);
+    const unitEl  = document.getElementById(`prod_unit_${id}`);
+
     if (defaults) {
-      if (defaults.rate !== undefined) {
-        const rateEl = document.getElementById(`prod_rateval_${id}`);
-        if (rateEl) rateEl.value = defaults.rate;
-      }
-      calcProduct(id);
+      if (rateEl) rateEl.value = defaults.rate !== null ? defaults.rate : '';
+      if (unitEl) unitEl.textContent = defaults.unit ? `oz/lb: ${defaults.unit}` : '';
+    } else {
+      if (rateEl) rateEl.value = '';
+      if (unitEl) unitEl.textContent = '';
     }
+    calcProduct(id);
   }
 
   // ── Product Calculator ──
@@ -1173,15 +1188,44 @@
 
     const totalChem = area > 0 && rate > 0 ? (area / 1000) * rate : 0;
 
-    const chemEl   = document.getElementById(`prod_totalchem_${id}`);
-    const hintEl   = document.getElementById(`prod_hint_${id}`);
+    // Gallons Applied based on sprayer type
+    // Hand/Backpack: 1 gal/1000 sq ft
+    // ATV Spot:      1 gal/1000 sq ft
+    // Z Sprayer:     15 gal/acre (1 acre = 43,560 sq ft)
+    // ATV Boom:      24 gal/acre
+    const sprayerRates = {
+      'Hand/Backpack Sprayer': { rate: 1,  per: 'sqft' },
+      'ATV Spot Sprayer':      { rate: 1,  per: 'sqft' },
+      'Z Sprayer':             { rate: 15, per: 'acre' },
+      'ATV Boom Sprayer':      { rate: 24, per: 'acre' },
+    };
 
-    if (chemEl) chemEl.value = totalChem > 0 ? totalChem.toFixed(2) : '';
+    let totalGallons = 0;
+    let gallonsLabel = '';
+    if (area > 0 && sprayer && sprayerRates[sprayer]) {
+      const sr = sprayerRates[sprayer];
+      if (sr.per === 'sqft') {
+        totalGallons = (area / 1000) * sr.rate;
+        gallonsLabel = `${area.toLocaleString()} sq ft × ${sr.rate} gal/1000 sq ft = ${totalGallons.toFixed(2)} gal`;
+      } else {
+        const acres = area / 43560;
+        totalGallons = acres * sr.rate;
+        gallonsLabel = `${acres.toFixed(3)} acres × ${sr.rate} gal/acre = ${totalGallons.toFixed(2)} gal`;
+      }
+    }
+
+    const chemEl    = document.getElementById(`prod_totalchem_${id}`);
+    const gallonEl  = document.getElementById(`prod_gallons_${id}`);
+    const hintEl    = document.getElementById(`prod_hint_${id}`);
+
+    if (chemEl)   chemEl.value   = totalChem    > 0 ? totalChem.toFixed(2)    : '';
+    if (gallonEl) gallonEl.value = totalGallons > 0 ? totalGallons.toFixed(2) + ' gal' : '';
 
     if (hintEl) {
       if (area > 0 && rate > 0) {
         let hint = `📐 ${area.toLocaleString()} sq ft  ×  ${rate} oz/lb per 1000 sq ft  =  <strong>${totalChem.toFixed(2)} oz/lb total chemical</strong>`;
         if (sprayer) hint += `<br>🚜 Sprayer: <strong>${sprayer}</strong>`;
+        if (gallonsLabel) hint += `<br>💧 ${gallonsLabel}`;
         hintEl.innerHTML = hint;
         hintEl.style.display = 'block';
       } else {
@@ -1233,8 +1277,8 @@
           <input type="number" id="prod_area_${id}" placeholder="0" oninput="calcProduct(${id})">
         </div>
         <div class="field">
-          <label>Rate (oz/lb per 1000 sq ft) <span class="req">*</span></label>
-          <input type="number" id="prod_rateval_${id}" placeholder="0" step="0.01" oninput="calcProduct(${id})">
+          <label>Rate (oz/lb per 1000 sq ft) <span class="req">*</span> <span id="prod_unit_${id}" style="font-size:10px;color:var(--green);font-weight:700;text-transform:none;letter-spacing:0;margin-left:4px;"></span></label>
+          <input type="number" id="prod_rateval_${id}" placeholder="Auto-fills on product select" step="0.01" oninput="calcProduct(${id})">
         </div>
       </div>
       <div class="two-col">
@@ -1252,6 +1296,10 @@
           <label>Total Chemical (oz/lb) <span style="font-size:9px;color:var(--light);font-weight:400;">auto</span></label>
           <input type="number" id="prod_totalchem_${id}" placeholder="—" step="0.01" style="background:var(--green-bg);color:var(--green);font-weight:600;" readonly>
         </div>
+      </div>
+      <div class="field">
+        <label>Gallons Applied <span style="font-size:9px;color:var(--light);font-weight:400;">auto</span></label>
+        <input type="text" id="prod_gallons_${id}" placeholder="—" style="background:var(--green-bg);color:var(--green);font-weight:600;" readonly>
       </div>
       <div id="prod_hint_${id}" style="display:none; background:var(--green-pale); border-radius:8px; padding:8px 12px; margin-top:2px; font-size:12px; color:var(--green); line-height:1.8;"></div
       </div>
@@ -1324,6 +1372,7 @@
         rate: document.getElementById(`prod_rateval_${id}`)?.value || '',
         totalChem: document.getElementById(`prod_totalchem_${id}`)?.value || '',
         sprayer: document.getElementById(`prod_carrier_${id}`)?.value || '',
+        gallons: document.getElementById(`prod_gallons_${id}`)?.value || '',
       });
     });
     return {
@@ -1488,6 +1537,7 @@
         row('Total Chemical', p.totalChem ? p.totalChem + ' oz/lb' : '—');
         row('Carrier', p.carrier ? p.carrier + ' gal/1000 sq ft' : '—');
         row('Sprayer Type', p.sprayer || '—');
+        row('Gallons Applied', p.gallons || '—');
         row('Less Than Label Rate', p.lessThanLabel || '—');
         y += 6;
       });
