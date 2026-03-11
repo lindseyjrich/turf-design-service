@@ -1442,24 +1442,34 @@
     }
   }
 
-  // ── Email via EmailJS ──
+  // ── Email via Google Apps Script ──
   async function sendEmailNotification(data) {
     if (!emails.length) return { ok: false, msg: 'No email addresses added' };
-    // Uses EmailJS free tier — user needs to configure their own service/template
-    // Fallback: mailto link
-    const subject = encodeURIComponent(`Service Complete: ${data.clientName} - ${data.date}`);
-    const body = encodeURIComponent(
-      `STATEMENT OF SERVICE - Turf Design Inc.\n\n` +
-      `Date: ${data.date}\nApplicator: ${data.certApplicator}\nTech: ${data.techApplicator}\n\n` +
-      `CLIENT: ${data.clientName}\nAddress: ${data.address}, ${data.city}, ${data.state} ${data.zip}\n\n` +
-      `SITE: Temp ${data.temp}°F, Wind ${data.windSpeed} mph ${data.windDir}\n` +
-      `Target: ${data.targetLocation}\nPests: ${data.pests}\nChemicals: ${data.chemTypes}\n\n` +
-      `PRODUCTS:\n${data.products.map(p => `- ${p.name} | Target: ${p.target} | Area: ${p.area} sqft | Rate: ${p.rate} oz/1000sqft | Gallons: ${p.gallons}`).join('\n')}\n\n` +
-      `Photos: ${data.photoCount} attached\nNotes: ${data.notes}\n\nSubmitted via Turf Design Inc. Service App`
-    );
-    const mailtoLink = `mailto:${emails.join(',')}?subject=${subject}&body=${body}`;
-    window.open(mailtoLink, '_blank');
-    return { ok: true, mailto: true };
+    const url = 'https://script.google.com/macros/s/AKfycbwndil65OPRZpzdQsWvObgwUMnoxgbc-tRKM3EBySYodvG4lzN78akk9KJfUOIe8AkZNg/exec';
+    try {
+      const payload = {
+        action: 'sendEmail',
+        notifyEmails: emails,
+        subject: `Service Complete: ${data.clientName} - ${data.date}`,
+        body:
+          `STATEMENT OF SERVICE — Turf Design Inc.\n\n` +
+          `Date: ${data.date}\nApplicator: ${data.certApplicator}\nTech: ${data.techApplicator}\n\n` +
+          `CLIENT: ${data.clientName}\nAddress: ${data.address}, ${data.city}, ${data.state} ${data.zip}\nPhone: ${data.phone}\nTurf SF: ${data.turfSF}\n\n` +
+          `SITE: Temp ${data.temp}°F, Wind ${data.windSpeed} mph ${data.windDir}\n` +
+          `Target: ${data.targetLocation}\nPests: ${data.pests}\nChemicals: ${data.chemTypes}\n\n` +
+          `PRODUCTS:\n${data.products.map(p => `- ${p.name} | Target: ${p.target} | Area: ${p.area} sqft | Rate: ${p.rate} | Gallons: ${p.gallons}`).join('\n')}\n\n` +
+          `Notes: ${data.notes}\n\nSubmitted via Turf Design Inc. Service App`,
+      };
+      await fetch(url, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      return { ok: true };
+    } catch(e) {
+      return { ok: false, msg: e.message };
+    }
   }
 
   // ── PDF Generation ──
@@ -1884,7 +1894,7 @@
     // Status messages
     const statusEl = document.getElementById('sendStatus');
     let statusMsgs = [];
-    if (emailResult.ok) statusMsgs.push(emailResult.mailto ? '📧 Email draft opened in your mail app' : '📧 Email notification sent');
+    if (emailResult.ok) statusMsgs.push('📧 Email notification sent');
     if (sheetsResult.ok) statusMsgs.push('📊 Logged to Google Sheets');
     else statusMsgs.push('⚠️ Sheets logging: ' + sheetsResult.msg);
     if (statusMsgs.length) { statusEl.className = 'send-status ok'; statusEl.textContent = statusMsgs.join('  •  '); }
