@@ -1291,7 +1291,7 @@
       <div class="two-col">
         <div class="field">
           <label>Area (sq ft) <span class="req">*</span></label>
-          <input type="number" id="prod_area_${id}" placeholder="0" oninput="calcProduct(${id})">
+          <input type="number" id="prod_area_${id}" placeholder="0" oninput="calcProduct(${id})" value="${document.getElementById('turfSF')?.value || ''}">
         </div>
         <div class="field">
           <label>Rate (oz/lb per 1000 sq ft) <span class="req">*</span> <span id="prod_unit_${id}" style="font-size:10px;color:var(--green);font-weight:700;text-transform:none;letter-spacing:0;margin-left:4px;"></span></label>
@@ -1991,6 +1991,13 @@
     const stateEl = document.getElementById('state');
     for (let o of stateEl.options) {
       if (o.value === c.state || o.text === c.state) { stateEl.value = o.value; break; }
+    }
+    // Fill all existing product area fields with the turf SF and recalculate
+    if (c.sf) {
+      for (let i = 1; i <= productRowCount; i++) {
+        const areaEl = document.getElementById(`prod_area_${i}`);
+        if (areaEl) { areaEl.value = c.sf; calcProduct(i); }
+      }
     }
   }
 </script>
