@@ -843,6 +843,19 @@
 
     <div class="card">
       <div class="field">
+        <label>Load Client</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="clientDropdown" style="flex:1;" onchange="loadClientFromDropdown()">
+            <option value="">— Select a client —</option>
+          </select>
+          <label style="cursor:pointer;background:#2a7d4f;color:#fff;padding:8px 12px;border-radius:8px;font-size:13px;white-space:nowrap;">
+            Import CSV
+            <input type="file" accept=".csv" style="display:none;" onchange="importClientCSV(event)">
+          </label>
+        </div>
+        <div style="font-size:11px;color:#888;margin-top:4px;">CSV columns: Name, Address, City, State, Zip, Phone, SF</div>
+      </div>
+      <div class="field">
         <label>Client Name <span class="req">*</span></label>
         <input type="text" id="clientName" placeholder="Full name">
       </div>
@@ -885,6 +898,10 @@
           <label>Phone</label>
           <input type="tel" id="phone" placeholder="(xxx) xxx-xxxx">
         </div>
+      </div>
+      <div class="field">
+        <label>Total Turf SF</label>
+        <input type="number" id="turfSF" placeholder="e.g. 5000" min="0">
       </div>
     </div>
   </div>
@@ -1388,6 +1405,7 @@
       state: document.getElementById('state').value,
       zip: document.getElementById('zip').value,
       phone: document.getElementById('phone').value,
+      turfSF: document.getElementById('turfSF').value,
       temp: document.getElementById('temp').value,
       windSpeed: document.getElementById('windSpeed').value,
       windDir: document.getElementById('windDir').value,
@@ -1911,6 +1929,70 @@
   addProductRow();
   emails.push('lbreidenthal@turfdesigninc.com', 'cbeilman@turfdesigninc.com');
   renderEmailTags();
+  populateClientDropdown();
+
+  // ── Client CSV Import ──
+  function importClientCSV(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const lines = e.target.result.split(/\r?\n/).filter(l => l.trim());
+      const clients = [];
+      for (let i = 0; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+        // Skip header row if first cell looks like a label
+        if (i === 0 && isNaN(cols[6]) && /name|client/i.test(cols[0])) continue;
+        if (cols.length < 2) continue;
+        clients.push({
+          name:    cols[0] || '',
+          address: cols[1] || '',
+          city:    cols[2] || '',
+          state:   cols[3] || '',
+          zip:     cols[4] || '',
+          phone:   cols[5] || '',
+          sf:      cols[6] || '',
+        });
+      }
+      if (!clients.length) { alert('No client data found in CSV.'); return; }
+      localStorage.setItem('turfClients', JSON.stringify(clients));
+      populateClientDropdown();
+      alert(`${clients.length} client(s) imported successfully.`);
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function populateClientDropdown() {
+    const sel = document.getElementById('clientDropdown');
+    const clients = JSON.parse(localStorage.getItem('turfClients') || '[]');
+    sel.innerHTML = '<option value="">— Select a client —</option>';
+    clients.forEach((c, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = c.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  function loadClientFromDropdown() {
+    const sel = document.getElementById('clientDropdown');
+    const idx = sel.value;
+    if (idx === '') return;
+    const clients = JSON.parse(localStorage.getItem('turfClients') || '[]');
+    const c = clients[idx];
+    if (!c) return;
+    document.getElementById('clientName').value = c.name;
+    document.getElementById('address').value    = c.address;
+    document.getElementById('city').value       = c.city;
+    document.getElementById('zip').value        = c.zip;
+    document.getElementById('phone').value      = c.phone;
+    document.getElementById('turfSF').value     = c.sf;
+    const stateEl = document.getElementById('state');
+    for (let o of stateEl.options) {
+      if (o.value === c.state || o.text === c.state) { stateEl.value = o.value; break; }
+    }
+  }
 </script>
 </body>
 </html>
