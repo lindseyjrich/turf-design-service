@@ -1916,6 +1916,7 @@
     document.querySelector('.step-indicator').style.display = 'flex';
     document.getElementById('success-screen').style.display = 'none';
     document.querySelectorAll('input:not([type=file]), select, textarea').forEach(el => el.value = '');
+    document.getElementById('licenseNum').value = '5830';
     document.querySelectorAll('.checkbox-item.checked').forEach(el => {
       el.classList.remove('checked');
       el.querySelector('.check-mark').textContent = '';
