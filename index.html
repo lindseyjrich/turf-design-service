@@ -844,16 +844,9 @@
     <div class="card">
       <div class="field">
         <label>Load Client</label>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <select id="clientDropdown" style="flex:1;" onchange="loadClientFromDropdown()">
-            <option value="">— Select a client —</option>
-          </select>
-          <label style="cursor:pointer;background:#2a7d4f;color:#fff;padding:8px 12px;border-radius:8px;font-size:13px;white-space:nowrap;">
-            Import CSV
-            <input type="file" accept=".csv" style="display:none;" onchange="importClientCSV(event)">
-          </label>
-        </div>
-        <div style="font-size:11px;color:#888;margin-top:4px;">CSV columns: Name, Address, City, State, Zip, Phone, SF</div>
+        <select id="clientDropdown" style="width:100%;" onchange="loadClientFromDropdown()">
+          <option value="">— Select a client —</option>
+        </select>
       </div>
       <div class="field">
         <label>Client Name <span class="req">*</span></label>
@@ -1942,45 +1935,43 @@
   addProductRow();
   emails.push('lbreidenthal@turfdesigninc.com', 'cbeilman@turfdesigninc.com');
   renderEmailTags();
-  populateClientDropdown();
-
-  // ── Client CSV Import ──
-  function importClientCSV(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const lines = e.target.result.split(/\r?\n/).filter(l => l.trim());
-      const clients = [];
-      for (let i = 0; i < lines.length; i++) {
-        const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-        // Skip header row if first cell looks like a label
-        if (i === 0 && isNaN(cols[6]) && /name|client/i.test(cols[0])) continue;
-        if (cols.length < 2) continue;
-        clients.push({
-          name:    cols[0] || '',
-          address: cols[1] || '',
-          city:    cols[2] || '',
-          state:   cols[3] || '',
-          zip:     cols[4] || '',
-          phone:   cols[5] || '',
-          sf:      cols[6] || '',
-        });
-      }
-      if (!clients.length) { alert('No client data found in CSV.'); return; }
-      localStorage.setItem('turfClients', JSON.stringify(clients));
-      populateClientDropdown();
-      alert(`${clients.length} client(s) imported successfully.`);
-    };
-    reader.readAsText(file);
-    event.target.value = '';
-  }
+  // ── Client List ──
+  const clientList = [
+    { name: 'CS- Triangle',            address: '12610 Johnson Dr',        city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.764.6531', sf: '10890' },
+    { name: 'CS- Shawnee Cemetery',    address: '11810 W 61st Ter.',       city: 'Shawnee',      state: 'KS', zip: '66203', phone: '913.764.6532', sf: '76230' },
+    { name: 'CS- Pleasant View',       address: '6025 Quivira Rd',         city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.764.6533', sf: '279655.2' },
+    { name: 'CS- City Hall',           address: '11110 Johnson Dr',        city: 'Shawnee',      state: 'KS', zip: '66203', phone: '913.764.6534', sf: '7405.2' },
+    { name: 'CS- FS 71',               address: '6501 Quivira Rd',         city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.764.6535', sf: '125017.2' },
+    { name: 'CS- FS 73',               address: '6805 Hedge Lane Ter.',    city: 'Shawnee',      state: 'KS', zip: '66226', phone: '913.764.6536', sf: '157687.2' },
+    { name: 'CS- FS 74',               address: '5300 Woodsonia Dr',       city: 'Shawnee',      state: 'KS', zip: '66226', phone: '913.764.6537', sf: '63597.6' },
+    { name: 'CS- Justice Center',      address: '5850 Renner Rd',          city: 'Shawnee',      state: 'KS', zip: '66217', phone: '913.764.6538', sf: '350222.4' },
+    { name: 'CS- Civic Center',        address: '13817 Johnson Dr.',       city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.764.6539', sf: '389426.4' },
+    { name: 'CS- Herman Laird',        address: '11501 W 57th St.',        city: 'Shawnee',      state: 'KS', zip: '66203', phone: '913.764.6540', sf: '312325.2' },
+    { name: 'CS- Edgewood',            address: '',                        city: 'Shawnee',      state: 'KS', zip: '',      phone: '913.764.6541', sf: '35719.2' },
+    { name: 'CS- K7/Johnson',          address: '5600 Hedge Lane Ter.',    city: 'Shawnee',      state: 'KS', zip: '66226', phone: '913.764.6542', sf: '223462.8' },
+    { name: 'CS- Pflumm',              address: '13220 W 62nd Ter.',       city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.764.6543', sf: '4356' },
+    { name: 'CS- Quivira',             address: '7500 Quivira Rd.',        city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.764.6544', sf: '3049.2' },
+    { name: 'CS- SMP',                 address: '13500 Shawnee Mission Pkwy', city: 'Shawnee',   state: 'KS', zip: '66216', phone: '913.764.6545', sf: '621601.2' },
+    { name: 'CS- Silverheel',          address: '5999 Silverheel St',      city: 'Shawnee',      state: 'KS', zip: '66226', phone: '913.764.6546', sf: '116305.2' },
+    { name: 'CS- Clear Creek',         address: '5715 Monticello Rd',      city: 'Shawnee',      state: 'KS', zip: '66218', phone: '913.764.6547', sf: '114562.8' },
+    { name: 'Scott and Melinda Kincaid', address: '27151 W 108th St.',     city: 'Olathe',       state: 'KS', zip: '66061', phone: '816.810.1026', sf: '' },
+    { name: 'Hodges',                  address: '26341 W 108th St',        city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '3916' },
+    { name: 'Jan Young',               address: '26351 W 108th St',        city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.961.1980', sf: '' },
+    { name: 'Dennis Cantrell',         address: '10840 Cedar Niles Blvd',  city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.397.8797', sf: '10700' },
+    { name: 'Dorothy Lynch',           address: '26695 W Greentree Ct.',   city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.390.8525', sf: '3040' },
+    { name: 'Karen Kindred',           address: '27105 W 102nd St',        city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.829.7201', sf: '8188' },
+    { name: 'J.R Reilly',              address: '27574 Highland Cir',      city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.682.1234', sf: '14000' },
+    { name: 'Ron Mather',              address: '10632 S Zarda St',        city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '10500' },
+    { name: 'Katy Crookham',           address: '19336 182nd St',          city: 'Tonganoxie',   state: 'KS', zip: '66086', phone: '',             sf: '88000' },
+    { name: 'Carl Hornbeak',           address: '11245 Hubbard Rd',        city: 'Kansas City',  state: 'KS', zip: '66109', phone: '913.721.3269', sf: '2500' },
+    { name: 'Joe Nash',                address: '1720 S 18th St.',         city: 'Leavenworth',  state: 'KS', zip: '66048', phone: '913.682.2120', sf: '80000' },
+    { name: 'Frank Taylor',            address: '26391 Cedar Niles Cir',   city: 'Olathe',       state: 'KS', zip: '66061', phone: '913-782-9595', sf: '3350' },
+  ];
 
   function populateClientDropdown() {
     const sel = document.getElementById('clientDropdown');
-    const clients = JSON.parse(localStorage.getItem('turfClients') || '[]');
     sel.innerHTML = '<option value="">— Select a client —</option>';
-    clients.forEach((c, i) => {
+    clientList.forEach((c, i) => {
       const opt = document.createElement('option');
       opt.value = i;
       opt.textContent = c.name;
@@ -1992,8 +1983,7 @@
     const sel = document.getElementById('clientDropdown');
     const idx = sel.value;
     if (idx === '') return;
-    const clients = JSON.parse(localStorage.getItem('turfClients') || '[]');
-    const c = clients[idx];
+    const c = clientList[idx];
     if (!c) return;
     document.getElementById('clientName').value = c.name;
     document.getElementById('address').value    = c.address;
