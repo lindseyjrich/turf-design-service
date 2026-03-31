@@ -1048,6 +1048,7 @@
   let emails = [];
   let productRowCount = 0;
   let selectedClientSF = '';
+  let selectedClientLSF = '';
   let signatureData = null;
 
   const pestOptions = ['Grassy Weeds','Dandelions','Nutsedge','Crabgrass','Fungus','Broadleafs','Spider Mites','Bagworms'];
@@ -1169,6 +1170,24 @@
     }
   }
 
+  // ── SF Lookup by Target ──
+  function getSFForTarget(target) {
+    if (target === 'Turf') return selectedClientSF;
+    if (target === 'Tree' || target === 'Shrub') return selectedClientLSF;
+    if (target === 'Hardscape') return '';
+    return selectedClientSF; // default to turf
+  }
+
+  function onTargetChange(id) {
+    const target = document.getElementById(`prod_target_${id}`)?.value || '';
+    const sf = getSFForTarget(target);
+    if (sf) {
+      const areaEl = document.getElementById(`prod_area_${id}`);
+      if (areaEl) areaEl.value = sf;
+    }
+    calcProduct(id);
+  }
+
   // ── Product Calculator ──
   function calcProduct(id) {
     const area     = parseFloat(document.getElementById(`prod_area_${id}`)?.value) || 0;
@@ -1250,7 +1269,7 @@
       </div>
       <div class="field">
         <label>Target</label>
-        <select id="prod_target_${id}">
+        <select id="prod_target_${id}" onchange="onTargetChange(${id})">
           <option value="">Select</option>
           <option>Turf</option>
           <option>Tree</option>
@@ -1292,11 +1311,13 @@
       </div>
     `;
     document.getElementById('productRows').appendChild(div);
-    // Auto-fill SF from selected client into new product row
-    if (selectedClientSF) {
+    // Auto-fill SF from selected client into new product row based on target
+    const target = document.getElementById(`prod_target_${id}`)?.value || '';
+    const sf = getSFForTarget(target);
+    if (sf) {
       const areaEl = document.getElementById(`prod_area_${id}`);
       if (areaEl) {
-        areaEl.value = selectedClientSF;
+        areaEl.value = sf;
         calcProduct(id);
       }
     }
@@ -1887,7 +1908,7 @@
       el.classList.remove('checked');
       el.querySelector('.check-mark').textContent = '';
     });
-    photos = []; emails = ['lbreidenthal@turfdesigninc.com', 'cbeilman@turfdesigninc.com']; productRowCount = 0; selectedClientSF = ''; signatureData = null; sigHasMark = false;
+    photos = []; emails = ['lbreidenthal@turfdesigninc.com', 'cbeilman@turfdesigninc.com']; productRowCount = 0; selectedClientSF = ''; selectedClientLSF = ''; signatureData = null; sigHasMark = false;
     document.getElementById('productRows').innerHTML = '';
     document.getElementById('photoPreview').innerHTML = '';
     document.getElementById('emailTags').innerHTML = '';
@@ -1911,64 +1932,64 @@
 
   // ── Client List (from Client info.csv) ──
   const clientList = [
-    { name: 'CS- Triangle',            address: '12610 Johnson Dr',           city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '10890' },
-    { name: 'CS- Shawnee Cemetery',    address: '11810 W 61st Ter.',          city: 'Shawnee',      state: 'KS', zip: '66203', phone: '913.742.6440', sf: '76230' },
-    { name: 'CS- Pleasant View',       address: '6025 Quivira Rd',            city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '279655.2' },
-    { name: 'CS- City Hall',           address: '11110 Johnson Dr',           city: 'Shawnee',      state: 'KS', zip: '66203', phone: '913.742.6440', sf: '7405.2' },
-    { name: 'CS- FS 71',              address: '6501 Quivira Rd',            city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '125017.2' },
-    { name: 'CS- FS 73',              address: '6805 Hedge Lane Ter.',       city: 'Shawnee',      state: 'KS', zip: '66226', phone: '913.742.6440', sf: '157687.2' },
-    { name: 'CS- FS 74',              address: '5300 Woodsonia Dr',          city: 'Shawnee',      state: 'KS', zip: '66226', phone: '913.742.6440', sf: '63597.6' },
-    { name: 'CS- Justice Center',      address: '5850 Renner Rd',             city: 'Shawnee',      state: 'KS', zip: '66217', phone: '913.742.6440', sf: '350222.4' },
-    { name: 'CS- Civic Center',        address: '13817 Johnson Dr.',          city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '389426.4' },
-    { name: 'CS- Herman Laird',        address: '11501 W 57th St.',           city: 'Shawnee',      state: 'KS', zip: '66203', phone: '913.742.6440', sf: '312325.2' },
-    { name: 'CS- Edgewood',           address: '',                           city: 'Shawnee',      state: 'KS', zip: '',      phone: '913.742.6440', sf: '35719.2' },
-    { name: 'CS- K7/Johnson',         address: '5600 Hedge Lane Ter.',       city: 'Shawnee',      state: 'KS', zip: '66226', phone: '913.742.6440', sf: '223462.8' },
-    { name: 'CS- Pflumm',             address: '13220 W 62nd Ter.',          city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '4356' },
-    { name: 'CS- Quivira',            address: '7500 Quivira Rd.',           city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '3049.2' },
-    { name: 'CS- SMP',                address: '13500 Shawnee Mission Pkwy', city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '621601.2' },
-    { name: 'CS- Silverheel',         address: '5999 Silverheel St',         city: 'Shawnee',      state: 'KS', zip: '66226', phone: '913.742.6440', sf: '116305.2' },
-    { name: 'CS- Clear Creek',        address: '5715 Monticello Rd',         city: 'Shawnee',      state: 'KS', zip: '66218', phone: '913.742.6440', sf: '114562.8' },
-    { name: 'Scott and Melinda Kincaid', address: '27151 W 108th St.',       city: 'Olathe',       state: 'KS', zip: '66061', phone: '816.810.1026', sf: '' },
-    { name: 'Hodges',                 address: '26341 W 108th St',           city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '4000' },
-    { name: 'Jan Young',              address: '26351 W 108th St',           city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.961.1980', sf: '4000' },
-    { name: 'Dennis Cantrell',        address: '10840 Cedar Niles Blvd',     city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.397.8797', sf: '10700' },
-    { name: 'Dorothy Lynch',          address: '26695 W Greentree Ct.',      city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.390.8525', sf: '3040' },
-    { name: 'Karen Kindred',          address: '27105 W 102nd St',           city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.829.7201', sf: '8188' },
-    { name: 'J.R Reilly',             address: '27574 Highland Cir',         city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.682.1234', sf: '14000' },
-    { name: 'Ron Mather',             address: '10632 S Zarda St',           city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '10500' },
-    { name: 'Katy Crookham',          address: '19336 182nd St',             city: 'Tonganoxie',   state: 'KS', zip: '66086', phone: '',             sf: '88000' },
-    { name: 'Carl Hornbeak',          address: '11245 Hubbard Rd',           city: 'Kansas City',  state: 'KS', zip: '66109', phone: '913.721.3269', sf: '2500' },
-    { name: 'Joe Nash',               address: '1720 S 18th St.',            city: 'Leavenworth',  state: 'KS', zip: '66048', phone: '913.682.2120', sf: '80000' },
-    { name: 'Jay Breidenthal',        address: '17649 Hemphill Rd',          city: 'Bonner Springs', state: 'KS', zip: '66012', phone: '',           sf: '72000' },
-    { name: 'Eymann - Campus A',      address: '25501 W Valley Parkway',     city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '45000' },
-    { name: 'Eymann - Campus B',      address: '25055 W Valley Parkway',     city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '48325' },
-    { name: 'Eymann - Campus C',      address: '25618 W 103rd St',           city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '18500' },
-    { name: 'CCD- Canyon Oaks Model Home 1', address: '25541 W 114th Ter',  city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '10000' },
-    { name: 'CCD- Canyon Oaks Model Home 2', address: '11540 Deer Ridge Dr', city: 'Olathe',      state: 'KS', zip: '66061', phone: '',             sf: '10000' },
-    { name: 'CCD- Canyon Oaks Model Home 3', address: '11532 Hollis Ln',    city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '10000' },
-    { name: 'CCD- Meadows Model Home 1', address: '25009 W 112th St',       city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '10000' },
-    { name: 'CCD- Canyon Oaks Monument', address: 'Cedar Creek Parkway and West 115th St', city: 'Olathe', state: 'KS', zip: '66061', phone: '',    sf: '11000' },
-    { name: 'CCD - HLE Monument',     address: 'West 107th terr and South Bluestem Parkway', city: 'Olathe', state: 'KS', zip: '66061', phone: '', sf: '10000' },
-    { name: 'CCD- North Clare Rd',    address: 'S Clare Rd and West 110th Terr', city: 'Olathe',  state: 'KS', zip: '66061', phone: '',             sf: '39600' },
-    { name: 'CCD- Bluestem Parkway',  address: 'South Bluestem Parkway and W 107th Ter', city: 'Olathe', state: 'KS', zip: '66061', phone: '',     sf: '57000' },
-    { name: 'CCD- Duggan Residence',  address: '25384 W 107th Ter',          city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '9500' },
-    { name: 'CCD-West Valley',        address: 'West Valley Parkway and South Shadow Circle', city: 'Olathe', state: 'KS', zip: '66061', phone: '', sf: '55110' },
-    { name: 'CCD-W 107th Terr',       address: 'W 107th Terr',               city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '64650' },
-    { name: 'CCD - Green St',         address: 'S Green Road and College Blvd', city: 'Olathe',    state: 'KS', zip: '66061', phone: '',             sf: '21000' },
-    { name: 'CCD- Cedar Creek Parkway North', address: 'Cedar Creek Parkway and College Blvd', city: 'Olathe', state: 'KS', zip: '66061', phone: '', sf: '58750' },
-    { name: 'CCD - College Blvd',     address: 'College Blvd and South Green Rd', city: 'Olathe',  state: 'KS', zip: '66061', phone: '',             sf: '79500' },
-    { name: 'Mather Construction- Little Learners', address: '26115 W Valley Parkway', city: 'Olathe', state: 'KS', zip: '66061', phone: '',        sf: '14500' },
-    { name: 'Mather Construction- Leavenworth', address: '1280 W Eisenhower Rd', city: 'Leavenworth', state: 'KS', zip: '66048', phone: '',         sf: '' },
-    { name: 'Mather Construction- Campus J', address: '11060 S Green Rd',    city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '57932' },
-    { name: 'Mike Medina',            address: '5205 W 132nd Terrace',       city: 'Overland Park', state: 'KS', zip: '66209', phone: '',            sf: '8850' },
-    { name: 'Andy Tylicki',           address: '445 Terrace Trail E',        city: 'Lake Quivira', state: 'KS', zip: '66217', phone: '',             sf: '8820' },
-    { name: 'Cerris Builders',        address: '13275 W 109th St',           city: 'Lenexa',       state: 'KS', zip: '66210', phone: '',             sf: '13500' },
-    { name: 'Holy Family Catholic Church- Main Church', address: '820 Birch St', city: 'Eudora',   state: 'KS', zip: '66025', phone: '',             sf: '41500' },
-    { name: 'Holy Family Catholic Church- Historic Church', address: '301 E 9th St', city: 'Eudora', state: 'KS', zip: '66025', phone: '',          sf: '15000' },
-    { name: 'Holy Family Catholic Church- Rectory', address: '311 E 9th St', city: 'Eudora',       state: 'KS', zip: '66025', phone: '',             sf: '15200' },
-    { name: 'Macrorie, Todd',         address: '10275 S Shadow Ridge Dr',    city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '8555' },
-    { name: 'McAnany Construction',   address: '15320 Midland Dr',           city: 'Shawnee',      state: 'KS', zip: '66217', phone: '',             sf: '6250' },
-    { name: 'St. James Academy',      address: '24505 Prairie Star Parkway', city: 'Lenexa',       state: 'KS', zip: '66227', phone: '',             sf: '833931' },
+    { name: 'CS- Triangle',            address: '12610 Johnson Dr',           city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '10890', lsf: '' },
+    { name: 'CS- Shawnee Cemetery',    address: '11810 W 61st Ter.',          city: 'Shawnee',      state: 'KS', zip: '66203', phone: '913.742.6440', sf: '76230', lsf: '' },
+    { name: 'CS- Pleasant View',       address: '6025 Quivira Rd',            city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '279655.2', lsf: '' },
+    { name: 'CS- City Hall',           address: '11110 Johnson Dr',           city: 'Shawnee',      state: 'KS', zip: '66203', phone: '913.742.6440', sf: '7405.2', lsf: '' },
+    { name: 'CS- FS 71',              address: '6501 Quivira Rd',            city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '125017.2', lsf: '' },
+    { name: 'CS- FS 73',              address: '6805 Hedge Lane Ter.',       city: 'Shawnee',      state: 'KS', zip: '66226', phone: '913.742.6440', sf: '157687.2', lsf: '' },
+    { name: 'CS- FS 74',              address: '5300 Woodsonia Dr',          city: 'Shawnee',      state: 'KS', zip: '66226', phone: '913.742.6440', sf: '63597.6', lsf: '' },
+    { name: 'CS- Justice Center',      address: '5850 Renner Rd',             city: 'Shawnee',      state: 'KS', zip: '66217', phone: '913.742.6440', sf: '350222.4', lsf: '' },
+    { name: 'CS- Civic Center',        address: '13817 Johnson Dr.',          city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '389426.4', lsf: '' },
+    { name: 'CS- Herman Laird',        address: '11501 W 57th St.',           city: 'Shawnee',      state: 'KS', zip: '66203', phone: '913.742.6440', sf: '312325.2', lsf: '' },
+    { name: 'CS- Edgewood',           address: '',                           city: 'Shawnee',      state: 'KS', zip: '',      phone: '913.742.6440', sf: '35719.2', lsf: '' },
+    { name: 'CS- K7/Johnson',         address: '5600 Hedge Lane Ter.',       city: 'Shawnee',      state: 'KS', zip: '66226', phone: '913.742.6440', sf: '223462.8', lsf: '' },
+    { name: 'CS- Pflumm',             address: '13220 W 62nd Ter.',          city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '4356', lsf: '' },
+    { name: 'CS- Quivira',            address: '7500 Quivira Rd.',           city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '3049.2', lsf: '' },
+    { name: 'CS- SMP',                address: '13500 Shawnee Mission Pkwy', city: 'Shawnee',      state: 'KS', zip: '66216', phone: '913.742.6440', sf: '621601.2', lsf: '' },
+    { name: 'CS- Silverheel',         address: '5999 Silverheel St',         city: 'Shawnee',      state: 'KS', zip: '66226', phone: '913.742.6440', sf: '116305.2', lsf: '' },
+    { name: 'CS- Clear Creek',        address: '5715 Monticello Rd',         city: 'Shawnee',      state: 'KS', zip: '66218', phone: '913.742.6440', sf: '114562.8', lsf: '' },
+    { name: 'Scott and Melinda Kincaid', address: '27151 W 108th St.',       city: 'Olathe',       state: 'KS', zip: '66061', phone: '816.810.1026', sf: '', lsf: '' },
+    { name: 'Hodges',                 address: '26341 W 108th St',           city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '4000', lsf: '' },
+    { name: 'Jan Young',              address: '26351 W 108th St',           city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.961.1980', sf: '4000', lsf: '' },
+    { name: 'Dennis Cantrell',        address: '10840 Cedar Niles Blvd',     city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.397.8797', sf: '10700', lsf: '' },
+    { name: 'Dorothy Lynch',          address: '26695 W Greentree Ct.',      city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.390.8525', sf: '3040', lsf: '' },
+    { name: 'Karen Kindred',          address: '27105 W 102nd St',           city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.829.7201', sf: '8188', lsf: '' },
+    { name: 'J.R Reilly',             address: '27574 Highland Cir',         city: 'Olathe',       state: 'KS', zip: '66061', phone: '913.682.1234', sf: '14000', lsf: '' },
+    { name: 'Ron Mather',             address: '10632 S Zarda St',           city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '10500', lsf: '' },
+    { name: 'Katy Crookham',          address: '19336 182nd St',             city: 'Tonganoxie',   state: 'KS', zip: '66086', phone: '',             sf: '88000', lsf: '' },
+    { name: 'Carl Hornbeak',          address: '11245 Hubbard Rd',           city: 'Kansas City',  state: 'KS', zip: '66109', phone: '913.721.3269', sf: '2500', lsf: '' },
+    { name: 'Joe Nash',               address: '1720 S 18th St.',            city: 'Leavenworth',  state: 'KS', zip: '66048', phone: '913.682.2120', sf: '80000', lsf: '' },
+    { name: 'Jay Breidenthal',        address: '17649 Hemphill Rd',          city: 'Bonner Springs', state: 'KS', zip: '66012', phone: '',           sf: '72000', lsf: '2000' },
+    { name: 'Eymann - Campus A',      address: '25501 W Valley Parkway',     city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '45000', lsf: '' },
+    { name: 'Eymann - Campus B',      address: '25055 W Valley Parkway',     city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '48325', lsf: '' },
+    { name: 'Eymann - Campus C',      address: '25618 W 103rd St',           city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '18500', lsf: '5249' },
+    { name: 'CCD- Canyon Oaks Model Home 1', address: '25541 W 114th Ter',  city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '10000', lsf: '1200' },
+    { name: 'CCD- Canyon Oaks Model Home 2', address: '11540 Deer Ridge Dr', city: 'Olathe',      state: 'KS', zip: '66061', phone: '',             sf: '10000', lsf: '1200' },
+    { name: 'CCD- Canyon Oaks Model Home 3', address: '11532 Hollis Ln',    city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '10000', lsf: '1200' },
+    { name: 'CCD- Meadows Model Home 1', address: '25009 W 112th St',       city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '10000', lsf: '1200' },
+    { name: 'CCD- Canyon Oaks Monument', address: 'Cedar Creek Parkway and West 115th St', city: 'Olathe', state: 'KS', zip: '66061', phone: '',    sf: '11000', lsf: '10100' },
+    { name: 'CCD - HLE Monument',     address: 'West 107th terr and South Bluestem Parkway', city: 'Olathe', state: 'KS', zip: '66061', phone: '', sf: '10000', lsf: '2100' },
+    { name: 'CCD- North Clare Rd',    address: 'S Clare Rd and West 110th Terr', city: 'Olathe',  state: 'KS', zip: '66061', phone: '',             sf: '39600', lsf: '' },
+    { name: 'CCD- Bluestem Parkway',  address: 'South Bluestem Parkway and W 107th Ter', city: 'Olathe', state: 'KS', zip: '66061', phone: '',     sf: '57000', lsf: '' },
+    { name: 'CCD- Duggan Residence',  address: '25384 W 107th Ter',          city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '9500', lsf: '3150' },
+    { name: 'CCD-West Valley',        address: 'West Valley Parkway and South Shadow Circle', city: 'Olathe', state: 'KS', zip: '66061', phone: '', sf: '55110', lsf: '' },
+    { name: 'CCD-W 107th Terr',       address: 'W 107th Terr',               city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '64650', lsf: '' },
+    { name: 'CCD - Green St',         address: 'S Green Road and College Blvd', city: 'Olathe',    state: 'KS', zip: '66061', phone: '',             sf: '21000', lsf: '' },
+    { name: 'CCD- Cedar Creek Parkway North', address: 'Cedar Creek Parkway and College Blvd', city: 'Olathe', state: 'KS', zip: '66061', phone: '', sf: '58750', lsf: '' },
+    { name: 'CCD - College Blvd',     address: 'College Blvd and South Green Rd', city: 'Olathe',  state: 'KS', zip: '66061', phone: '',             sf: '79500', lsf: '' },
+    { name: 'Mather Construction- Little Learners', address: '26115 W Valley Parkway', city: 'Olathe', state: 'KS', zip: '66061', phone: '',        sf: '14500', lsf: '' },
+    { name: 'Mather Construction- Leavenworth', address: '1280 W Eisenhower Rd', city: 'Leavenworth', state: 'KS', zip: '66048', phone: '',         sf: '', lsf: '' },
+    { name: 'Mather Construction- Campus J', address: '11060 S Green Rd',    city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '57932', lsf: '' },
+    { name: 'Mike Medina',            address: '5205 W 132nd Terrace',       city: 'Overland Park', state: 'KS', zip: '66209', phone: '',            sf: '8850', lsf: '' },
+    { name: 'Andy Tylicki',           address: '445 Terrace Trail E',        city: 'Lake Quivira', state: 'KS', zip: '66217', phone: '',             sf: '8820', lsf: '' },
+    { name: 'Cerris Builders',        address: '13275 W 109th St',           city: 'Lenexa',       state: 'KS', zip: '66210', phone: '',             sf: '13500', lsf: '1600' },
+    { name: 'Holy Family Catholic Church- Main Church', address: '820 Birch St', city: 'Eudora',   state: 'KS', zip: '66025', phone: '',             sf: '41500', lsf: '' },
+    { name: 'Holy Family Catholic Church- Historic Church', address: '301 E 9th St', city: 'Eudora', state: 'KS', zip: '66025', phone: '',          sf: '15000', lsf: '1200' },
+    { name: 'Holy Family Catholic Church- Rectory', address: '311 E 9th St', city: 'Eudora',       state: 'KS', zip: '66025', phone: '',             sf: '15200', lsf: '800' },
+    { name: 'Macrorie, Todd',         address: '10275 S Shadow Ridge Dr',    city: 'Olathe',       state: 'KS', zip: '66061', phone: '',             sf: '8555', lsf: '' },
+    { name: 'McAnany Construction',   address: '15320 Midland Dr',           city: 'Shawnee',      state: 'KS', zip: '66217', phone: '',             sf: '6250', lsf: '2400' },
+    { name: 'St. James Academy',      address: '24505 Prairie Star Parkway', city: 'Lenexa',       state: 'KS', zip: '66227', phone: '',             sf: '833931', lsf: '216000' },
   ];
 
   function populateClientDropdown() {
@@ -1997,15 +2018,20 @@
     for (let o of stateEl.options) {
       if (o.value === c.state.trim() || o.text === c.state.trim()) { stateEl.value = o.value; break; }
     }
-    // Store SF and fill all existing product area fields with the turf SF and recalculate
+    // Store both SF values
     selectedClientSF = (c.sf || '').toString().trim();
-    if (selectedClientSF) {
-      document.querySelectorAll('[id^="prod_area_"]').forEach(el => {
-        el.value = selectedClientSF;
-        const rowId = el.id.replace('prod_area_', '');
-        calcProduct(parseInt(rowId));
-      });
-    }
+    selectedClientLSF = (c.lsf || '').toString().trim();
+    // Fill all existing product area fields based on their target selection
+    document.querySelectorAll('.product-row').forEach(row => {
+      const id = row.id.replace('product_', '');
+      const target = document.getElementById(`prod_target_${id}`)?.value || '';
+      const sf = getSFForTarget(target);
+      if (sf) {
+        const areaEl = document.getElementById(`prod_area_${id}`);
+        if (areaEl) areaEl.value = sf;
+      }
+      calcProduct(parseInt(id));
+    });
   }
 
   populateClientDropdown();
