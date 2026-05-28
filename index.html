@@ -766,7 +766,7 @@
         </div>
         <div class="field">
           <label>License #</label>
-          <input type="text" id="licenseNum" value="5830">
+          <input type="text" id="licenseNum" value="5830" autocomplete="off">
         </div>
       </div>
       <div class="two-col">
@@ -1862,6 +1862,18 @@
 
   async function submitForm() {
     const btn = document.getElementById('btnNext');
+
+    // Defense-in-depth: re-check required checkboxes before sending.
+    // Prevents submissions with empty pests/chemTypes if user navigated back and unchecked.
+    if (getChecked('pestsGrid').length === 0 || getChecked('chemTypeGrid').length === 0) {
+      alert('Please go back to Step 4 (Application) and select at least one pest and one chemical type before submitting.');
+      currentStep = 3;
+      renderStep();
+      if (getChecked('pestsGrid').length === 0) showCheckboxError('pestsGrid', 'Please select at least one pest');
+      if (getChecked('chemTypeGrid').length === 0) showCheckboxError('chemTypeGrid', 'Please select at least one chemical type');
+      return;
+    }
+
     const origHTML = btn.innerHTML;
     btn.innerHTML = '<div class="spinner"></div> Submitting...';
     btn.disabled = true;
@@ -1924,12 +1936,14 @@
     btn.disabled = false;
     currentStep = 0;
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('licenseNum').value = '5830';
     renderStep();
     addProductRow();
   }
 
   // Init
   document.getElementById('date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('licenseNum').value = '5830';
   addProductRow();
   emails.push('lbreidenthal@turfdesigninc.com', 'cbeilman@turfdesigninc.com');
   renderEmailTags();
