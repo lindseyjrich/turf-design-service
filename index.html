@@ -4,6 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Statement of Service</title>
+<script>
+  // ── Auto-update ──────────────────────────────────────────────────────────
+  // The app is a single cached file. On every open we ask the server for the
+  // latest version marker; if this saved copy is out of date, we silently
+  // reload the newest one. No manual cache-clearing on any device, ever.
+  // To ship an update: bump BOTH this number and the matching one in version.txt.
+  window.APP_VERSION = '2026.07.10.4';
+  (function () {
+    try {
+      var params = new URLSearchParams(location.search);
+      fetch('version.txt?_=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (latest) {
+          if (!latest) return;
+          latest = latest.trim();
+          // Reload only if we're stale AND haven't already reloaded for this version
+          // (the ?v= guard prevents any chance of an infinite reload loop).
+          if (latest && latest !== window.APP_VERSION && params.get('v') !== latest) {
+            var u = new URL(location.href);
+            u.searchParams.set('v', latest);
+            location.replace(u.toString());
+          }
+        })
+        .catch(function () { /* offline — keep using the saved copy */ });
+    } catch (e) { /* very old browser — skip the check, app still works */ }
+  })();
+</script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
