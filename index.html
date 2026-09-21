@@ -10,7 +10,7 @@
   // latest version marker; if this saved copy is out of date, we silently
   // reload the newest one. No manual cache-clearing on any device, ever.
   // To ship an update: bump BOTH this number and the matching one in version.txt.
-  window.APP_VERSION = '2026.09.17.2';
+  window.APP_VERSION = '2026.09.21.1';
   (function () {
     try {
       var params = new URLSearchParams(location.search);
@@ -971,7 +971,7 @@
         <input type="text" id="targetLocation" placeholder="e.g. Front lawn, backyard...">
       </div>
       <div class="field">
-        <label>Pests Controlled</label>
+        <label>Pests Controlled <span style="font-weight:400;color:#6b7280">(if applicable)</span></label>
         <div class="checkbox-grid" id="pestsGrid">
           <!-- Dynamically rendered -->
         </div>
@@ -1744,11 +1744,9 @@
 
     if (step === 3) {
       if (!document.getElementById('targetLocation').value.trim()) fail('targetLocation', 'Target location is required');
-      if (getChecked('pestsGrid').length === 0) {
-        showCheckboxError('pestsGrid', 'Please select at least one pest');
-        if (!firstError) firstError = 'pestsGrid';
-        valid = false;
-      } else clearCheckboxError('pestsGrid');
+      // Pests Controlled is optional — a straight fertilizer application has no
+      // target pest, and requiring one left those crews unable to submit at all.
+      clearCheckboxError('pestsGrid');
       if (getChecked('chemTypeGrid').length === 0) {
         showCheckboxError('chemTypeGrid', 'Please select at least one chemical type');
         if (!firstError) firstError = 'chemTypeGrid';
@@ -1906,14 +1904,14 @@
   async function submitForm() {
     const btn = document.getElementById('btnNext');
 
-    // Defense-in-depth: re-check required checkboxes before sending.
-    // Prevents submissions with empty pests/chemTypes if user navigated back and unchecked.
-    if (getChecked('pestsGrid').length === 0 || getChecked('chemTypeGrid').length === 0) {
-      alert('Please go back to Step 4 (Application) and select at least one pest and one chemical type before submitting.');
+    // Defense-in-depth: re-check the required checkboxes before sending, in case
+    // the applicator navigated back and unchecked one. Pests Controlled is NOT
+    // checked here — it is optional, since fertilizer has no target pest.
+    if (getChecked('chemTypeGrid').length === 0) {
+      alert('Please go back to Step 4 (Application) and select at least one chemical type before submitting.');
       currentStep = 3;
       renderStep();
-      if (getChecked('pestsGrid').length === 0) showCheckboxError('pestsGrid', 'Please select at least one pest');
-      if (getChecked('chemTypeGrid').length === 0) showCheckboxError('chemTypeGrid', 'Please select at least one chemical type');
+      showCheckboxError('chemTypeGrid', 'Please select at least one chemical type');
       return;
     }
 
