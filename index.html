@@ -10,7 +10,7 @@
   // latest version marker; if this saved copy is out of date, we silently
   // reload the newest one. No manual cache-clearing on any device, ever.
   // To ship an update: bump BOTH this number and the matching one in version.txt.
-  window.APP_VERSION = '2026.09.21.1';
+  window.APP_VERSION = '2026.09.21.2';
   (function () {
     try {
       var params = new URLSearchParams(location.search);
@@ -971,7 +971,7 @@
         <input type="text" id="targetLocation" placeholder="e.g. Front lawn, backyard...">
       </div>
       <div class="field">
-        <label>Pests Controlled <span style="font-weight:400;color:#6b7280">(if applicable)</span></label>
+        <label>Pests Controlled <span id="pestsReqMark"></span></label>
         <div class="checkbox-grid" id="pestsGrid">
           <!-- Dynamically rendered -->
         </div>
@@ -1124,10 +1124,33 @@
   }
   buildCheckboxGrid('pestsGrid', pestOptions);
   buildCheckboxGrid('chemTypeGrid', chemTypes);
+  syncPestRequirement();
 
   function toggleCheck(el) {
     el.classList.toggle('checked');
     el.querySelector('.check-mark').textContent = el.classList.contains('checked') ? '✓' : '';
+    // Ticking a chemical type can change whether a target pest is needed.
+    syncPestRequirement();
+  }
+
+  // A pesticide is applied to control something, and the record should name it.
+  // A straight fertilizer has no target pest — requiring one there blocked the
+  // crew entirely. So: required unless Fertilizer is the only thing applied.
+  function pestsRequired() {
+    const types = getChecked('chemTypeGrid');
+    return types.some(t => t !== 'Fertilizer');
+  }
+
+  // Keeps the label's red asterisk honest as chemical types are ticked, so the
+  // applicator sees whether pests are needed before hitting Next.
+  function syncPestRequirement() {
+    const mark = document.getElementById('pestsReqMark');
+    if (!mark) return;
+    const required = pestsRequired();
+    mark.innerHTML = required
+      ? '<span class="req">*</span>'
+      : '<span style="font-weight:400;color:#6b7280">(if applicable)</span>';
+    if (!required) clearCheckboxError('pestsGrid');
   }
 
   function getChecked(gridId) {
@@ -1744,9 +1767,12 @@
 
     if (step === 3) {
       if (!document.getElementById('targetLocation').value.trim()) fail('targetLocation', 'Target location is required');
-      // Pests Controlled is optional — a straight fertilizer application has no
-      // target pest, and requiring one left those crews unable to submit at all.
-      clearCheckboxError('pestsGrid');
+      // Required only when a pesticide is being applied — see pestsRequired.
+      if (pestsRequired() && getChecked('pestsGrid').length === 0) {
+        showCheckboxError('pestsGrid', 'Select at least one pest for a pesticide application');
+        if (!firstError) firstError = 'pestsGrid';
+        valid = false;
+      } else clearCheckboxError('pestsGrid');
       if (getChecked('chemTypeGrid').length === 0) {
         showCheckboxError('chemTypeGrid', 'Please select at least one chemical type');
         if (!firstError) firstError = 'chemTypeGrid';
@@ -1904,14 +1930,19 @@
   async function submitForm() {
     const btn = document.getElementById('btnNext');
 
-    // Defense-in-depth: re-check the required checkboxes before sending, in case
-    // the applicator navigated back and unchecked one. Pests Controlled is NOT
-    // checked here — it is optional, since fertilizer has no target pest.
-    if (getChecked('chemTypeGrid').length === 0) {
-      alert('Please go back to Step 4 (Application) and select at least one chemical type before submitting.');
+    // Defense-in-depth: re-check before sending, in case the applicator
+    // navigated back and unchecked something. Pests are only required when a
+    // pesticide is being applied — see pestsRequired.
+    const missingType = getChecked('chemTypeGrid').length === 0;
+    const missingPest = pestsRequired() && getChecked('pestsGrid').length === 0;
+    if (missingType || missingPest) {
+      alert(missingType
+        ? 'Please go back to Step 4 (Application) and select at least one chemical type before submitting.'
+        : 'Please go back to Step 4 (Application) and select the target pest before submitting.');
       currentStep = 3;
       renderStep();
-      showCheckboxError('chemTypeGrid', 'Please select at least one chemical type');
+      if (missingType) showCheckboxError('chemTypeGrid', 'Please select at least one chemical type');
+      if (missingPest) showCheckboxError('pestsGrid', 'Select at least one pest for a pesticide application');
       return;
     }
 
@@ -1965,6 +1996,7 @@
       el.classList.remove('checked');
       el.querySelector('.check-mark').textContent = '';
     });
+    syncPestRequirement();
     photos = []; emails = ['lbreidenthal@turfdesigninc.com', 'cbeilman@turfdesigninc.com']; productRowCount = 0; selectedClientSF = ''; selectedClientLSF = ''; signatureData = null; sigHasMark = false;
     document.getElementById('productRows').innerHTML = '';
     document.getElementById('photoPreview').innerHTML = '';
