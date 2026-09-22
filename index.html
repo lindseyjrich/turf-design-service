@@ -10,7 +10,7 @@
   // latest version marker; if this saved copy is out of date, we silently
   // reload the newest one. No manual cache-clearing on any device, ever.
   // To ship an update: bump BOTH this number and the matching one in version.txt.
-  window.APP_VERSION = '2026.09.22.1';
+  window.APP_VERSION = '2026.09.22.2';
   (function () {
     try {
       var params = new URLSearchParams(location.search);
@@ -1135,11 +1135,24 @@
   }
 
   // A pesticide is applied to control something, and the record should name it.
-  // A straight fertilizer has no target pest — requiring one there blocked the
-  // crew entirely. So: required unless Fertilizer is the only thing applied.
+  // A straight fertilizer has no target pest.
+  //
+  // Judged on the PRODUCTS actually selected, not the chemical-type boxes: only
+  // pesticides carry an EPA registration number, so the product list itself says
+  // whether anything was applied to control a pest. Going by the chemical-type
+  // ticks alone still demanded a pest for a bag of 46-0-0 whenever the crew had
+  // ticked something besides Fertilizer.
+  function selectedProducts() {
+    return [...document.querySelectorAll('[id^="prod_name_"]')]
+      .map(s => s.value)
+      .filter(Boolean);
+  }
+
   function pestsRequired() {
-    const types = getChecked('chemTypeGrid');
-    return types.some(t => t !== 'Fertilizer');
+    const products = selectedProducts();
+    if (products.length) return products.some(p => /EPA\s*#/i.test(p));
+    // Nothing picked yet — fall back to the chemical types ticked so far.
+    return getChecked('chemTypeGrid').some(t => t !== 'Fertilizer');
   }
 
   // Keeps the label's red asterisk honest as chemical types are ticked, so the
@@ -1240,6 +1253,8 @@
       }
       calcProduct(id);
     }
+    // Changing the product can change whether a target pest is needed.
+    syncPestRequirement();
   }
 
   // ── SF Lookup by Target ──
@@ -1398,6 +1413,8 @@
   function removeProduct(id) {
     const el = document.getElementById(`product_${id}`);
     if (el) el.remove();
+    // Dropping the only pesticide makes the target pest optional again.
+    syncPestRequirement();
   }
 
   // ── Photos ──
