@@ -10,7 +10,7 @@
   // latest version marker; if this saved copy is out of date, we silently
   // reload the newest one. No manual cache-clearing on any device, ever.
   // To ship an update: bump BOTH this number and the matching one in version.txt.
-  window.APP_VERSION = '2026.11.03.2';
+  window.APP_VERSION = '2026.11.03.3';
   (function () {
     try {
       var params = new URLSearchParams(location.search);
@@ -2112,6 +2112,10 @@
     { name: 'Eymann Properties- Building 3', address: '25618 W 103rd St', city: 'Olathe', state: 'KS', zip: '66061', phone: '', sf: '18500', lsf: '5250' },
     { name: 'CCNRA Entity 4003', address: 'W 103rd St and South Shadow Ridge Drive', city: 'Olathe', state: 'KS', zip: '66061', phone: '', sf: '15000', lsf: '' },
   ];
+
+  // Alphabetical in the dropdown. Prefixes keep groups together (CCD-, CS-, Eymann).
+  // Sorted before the dropdown is built, so option values still index clientList.
+  clientList.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base', numeric: true }));
 
   function populateClientDropdown() {
     const sel = document.getElementById('clientDropdown');
